@@ -68,7 +68,8 @@ class EyeballWindow: NSWindow {
     @objc func showAbout() {
         let alert = NSAlert()
         alert.messageText = "MouseEyes"
-        alert.informativeText = "A menubar app that watches your mouse cursor across all monitors.\n\nVersion 1.0"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        alert.informativeText = "A menubar app that watches your mouse cursor across all monitors.\n\nVersion \(version)"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
