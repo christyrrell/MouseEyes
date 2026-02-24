@@ -3,7 +3,6 @@ import Cocoa
 class EyeballView: NSView {
     private var isBlinking = false
     private var blinkTimer: Timer?
-    var targetScreen: NSScreen?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -17,6 +16,12 @@ class EyeballView: NSView {
 
     func triggerUpdate() {
         self.needsDisplay = true
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        if let menu = self.menu {
+            NSMenu.popUpContextMenu(menu, with: event, for: self)
+        }
     }
 
     private func startBlinkTimer() {
@@ -78,10 +83,6 @@ class EyeballView: NSView {
             pupilDistance = min(sqrt(dx * dx + dy * dy) / 100.0, 1.0)
         }
 
-        // Clear background
-        NSColor.clear.setFill()
-        dirtyRect.fill()
-
         // Draw two eyeballs side by side
         let eyeSpacing: CGFloat = 6
         let eyeSize: CGFloat = 16
@@ -110,25 +111,7 @@ class EyeballView: NSView {
                 context.setLineWidth(2.0)
                 context.setLineCap(.round)
 
-                // Convert NSBezierPath to CGPath for drawing
-                let cgPath = CGMutablePath()
-                var points = [CGPoint](repeating: .zero, count: 3)
-                for i in 0..<upperPath.elementCount {
-                    let type = upperPath.element(at: i, associatedPoints: &points)
-                    switch type {
-                    case .moveTo:
-                        cgPath.move(to: points[0])
-                    case .lineTo:
-                        cgPath.addLine(to: points[0])
-                    case .curveTo:
-                        cgPath.addCurve(to: points[2], control1: points[0], control2: points[1])
-                    case .closePath:
-                        cgPath.closeSubpath()
-                    @unknown default:
-                        break
-                    }
-                }
-                context.addPath(cgPath)
+                context.addPath(upperPath.cgPath)
                 context.strokePath()
             } else {
                 // Draw white of eye

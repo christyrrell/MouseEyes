@@ -9,7 +9,6 @@ build/
 
 # Xcode
 xcuserdata/
-*.xcodeproj/
 *.xcworkspace/
 DerivedData/
 
