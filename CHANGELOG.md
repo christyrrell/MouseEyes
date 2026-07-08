@@ -2,6 +2,10 @@
 
 ## 1.2 (2026-07-07)
 
+### Added
+
+- **Eye of Sauron mode**: Toggle "Eye of Sauron" in the menu to replace the googly eyes with a single fiery, lidless eye whose vertical slit pupil tracks the cursor (per monitor, of course). The choice persists across launches.
+
 ### Changed
 
 - **Native menubar item**: The eyes now live in a real `NSStatusItem` instead of floating windows overlaid on the menubar, so macOS reserves genuine space for them — they can never be drawn on top of another menubar icon, and other icons reflow around them. Per-monitor tracking is preserved by attaching an independent eyeball view to each display's status bar window (AppKit creates one per screen: the real button on one, a replicant that mirrors its image on the others — the mirroring that originally forced the floating-window approach).

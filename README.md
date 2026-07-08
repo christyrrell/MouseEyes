@@ -7,6 +7,7 @@ A macOS menubar app that displays animated eyeballs that follow your mouse curso
 - **Independent Multi-Monitor Tracking**: Each display has its own eyeballs that look at the mouse from their unique position
 - **Real Menubar Item**: The eyes live in a genuine `NSStatusItem`, so macOS reserves space for them — they can never overlap another menubar icon, and can be repositioned with Cmd-drag
 - **Natural Blinking**: Eyes blink randomly every 3-6 seconds for a lifelike effect
+- **Eye of Sauron Mode**: Swap the googly eyes for a single fiery, lidless eye — its slit pupil still tracks your cursor from every display
 - **Native Menu**: Click the eyes on any display for the app menu
 - **Native Swift**: Built with native macOS APIs for optimal performance
 
@@ -53,6 +54,7 @@ Once running, you'll see a pair of eyeballs in the menubar on each of your displ
 
 Click (or right-click) the eyeballs on any display to access:
 - **About MouseEyes**: View app information
+- **Eye of Sauron**: Toggle between googly eyes and a single fiery eye (persists across launches)
 - **Quit MouseEyes**: Exit the application
 
 ## Development

@@ -258,7 +258,7 @@ Entry point. Creates NSApplication and AppDelegate.
 
 Potential improvements:
 - [ ] Configurable positioning via preferences
-- [ ] Different eye styles (colors, shapes)
+- [x] Different eye styles — "Eye of Sauron" menu toggle (v1.2): single fiery almond eye, vertical slit pupil, no blinking (it is lidless), persisted via UserDefaults
 - [ ] Adjustable blink frequency
 - [ ] Multiple eyes per monitor
 - [ ] Eye tracking history/trails

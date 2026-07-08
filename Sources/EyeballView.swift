@@ -1,6 +1,19 @@
 import Cocoa
 
+enum EyeStyle: String {
+    case googly
+    case sauron
+}
+
 class EyeballView: NSView {
+    var style: EyeStyle = .googly {
+        didSet {
+            if oldValue != style {
+                needsDisplay = true
+            }
+        }
+    }
+
     private var isBlinking = false
     private var blinkTimer: Timer?
 
@@ -83,6 +96,12 @@ class EyeballView: NSView {
             pupilDistance = min(sqrt(dx * dx + dy * dy) / 100.0, 1.0)
         }
 
+        if style == .sauron {
+            // The Lidless Eye does not blink
+            drawSauronEye(context: context, angle: pupilAngle, distance: pupilDistance)
+            return
+        }
+
         // Draw two eyeballs side by side
         let eyeSpacing: CGFloat = 6
         let eyeSize: CGFloat = 16
@@ -151,5 +170,79 @@ class EyeballView: NSView {
         // Draw both eyes
         drawEye(at: CGPoint(x: leftEyeX, y: eyeY))
         drawEye(at: CGPoint(x: rightEyeX, y: eyeY))
+    }
+
+    /// A single fiery almond-shaped eye with a vertical slit pupil.
+    private func drawSauronEye(context: CGContext, angle: CGFloat, distance: CGFloat) {
+        let eyeWidth: CGFloat = 46
+        // Quad-curve control point offset; the almond's actual height is half this
+        let lidCurve: CGFloat = 18
+        let center = CGPoint(x: bounds.midX, y: bounds.midY)
+        let leftPoint = CGPoint(x: center.x - eyeWidth / 2, y: center.y)
+        let rightPoint = CGPoint(x: center.x + eyeWidth / 2, y: center.y)
+
+        let almond = CGMutablePath()
+        almond.move(to: leftPoint)
+        almond.addQuadCurve(to: rightPoint, control: CGPoint(x: center.x, y: center.y + lidCurve))
+        almond.addQuadCurve(to: leftPoint, control: CGPoint(x: center.x, y: center.y - lidCurve))
+        almond.closeSubpath()
+
+        // Outer fiery glow
+        context.saveGState()
+        context.setShadow(offset: .zero, blur: 5,
+                          color: NSColor(calibratedRed: 1.0, green: 0.45, blue: 0.0, alpha: 0.9).cgColor)
+        context.addPath(almond)
+        context.setFillColor(NSColor(calibratedRed: 0.45, green: 0.03, blue: 0.0, alpha: 1).cgColor)
+        context.fillPath()
+        context.restoreGState()
+
+        // The slit roams the almond; mostly horizontally, given the eye's shape
+        let maxSlitOffsetX = eyeWidth / 2 - 9
+        let maxSlitOffsetY: CGFloat = 1.5
+        let slitCenter = CGPoint(
+            x: center.x + cos(angle) * maxSlitOffsetX * distance,
+            y: center.y + sin(angle) * maxSlitOffsetY * distance
+        )
+
+        // Fire gradient radiating from the slit, clipped to the almond
+        context.saveGState()
+        context.addPath(almond)
+        context.clip()
+        let fireColors = [
+            NSColor(calibratedRed: 1.0, green: 0.95, blue: 0.45, alpha: 1).cgColor,
+            NSColor(calibratedRed: 1.0, green: 0.6, blue: 0.1, alpha: 1).cgColor,
+            NSColor(calibratedRed: 0.85, green: 0.2, blue: 0.0, alpha: 1).cgColor,
+            NSColor(calibratedRed: 0.35, green: 0.02, blue: 0.0, alpha: 1).cgColor,
+        ] as CFArray
+        if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                                     colors: fireColors, locations: [0.0, 0.35, 0.7, 1.0]) {
+            context.drawRadialGradient(
+                gradient,
+                startCenter: slitCenter, startRadius: 0,
+                endCenter: slitCenter, endRadius: eyeWidth * 0.55,
+                options: .drawsAfterEndLocation
+            )
+        }
+
+        // Vertical cat-eye slit pupil (drawn inside the almond clip)
+        let slitHeight: CGFloat = 13
+        let slitCurve: CGFloat = 5  // control offset; actual slit width is half this
+        let slitTop = CGPoint(x: slitCenter.x, y: slitCenter.y + slitHeight / 2)
+        let slitBottom = CGPoint(x: slitCenter.x, y: slitCenter.y - slitHeight / 2)
+        let slit = CGMutablePath()
+        slit.move(to: slitTop)
+        slit.addQuadCurve(to: slitBottom, control: CGPoint(x: slitCenter.x + slitCurve, y: slitCenter.y))
+        slit.addQuadCurve(to: slitTop, control: CGPoint(x: slitCenter.x - slitCurve, y: slitCenter.y))
+        slit.closeSubpath()
+        context.addPath(slit)
+        context.setFillColor(NSColor.black.cgColor)
+        context.fillPath()
+        context.restoreGState()
+
+        // Dark rim around the almond
+        context.addPath(almond)
+        context.setStrokeColor(NSColor(calibratedRed: 0.25, green: 0.0, blue: 0.0, alpha: 1).cgColor)
+        context.setLineWidth(1.0)
+        context.strokePath()
     }
 }

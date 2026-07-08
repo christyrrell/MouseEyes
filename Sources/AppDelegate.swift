@@ -3,14 +3,28 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
     private static let statusItemLength: CGFloat = 60
     private static let autosaveName = "MouseEyes"
+    private static let eyeStyleDefaultsKey = "EyeStyle"
 
     private var statusItem: NSStatusItem!
+    private var sauronMenuItem: NSMenuItem!
     private var eyeballViews: [EyeballView] = []
     private var mouseMonitor: Any?
     private var localMouseMonitor: Any?
     private var rescanTimer: Timer?
 
+    private var eyeStyle: EyeStyle = .googly {
+        didSet {
+            UserDefaults.standard.set(eyeStyle.rawValue, forKey: Self.eyeStyleDefaultsKey)
+            sauronMenuItem?.state = eyeStyle == .sauron ? .on : .off
+            eyeballViews.forEach { $0.style = eyeStyle }
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let raw = UserDefaults.standard.string(forKey: Self.eyeStyleDefaultsKey),
+           let style = EyeStyle(rawValue: raw) {
+            eyeStyle = style
+        }
         seedPreferredPositionIfNeeded()
         createStatusItem()
         attachEyeballViews()
@@ -60,6 +74,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         aboutItem.target = self
         menu.addItem(aboutItem)
         menu.addItem(.separator())
+        sauronMenuItem = NSMenuItem(title: "Eye of Sauron", action: #selector(toggleSauron), keyEquivalent: "")
+        sauronMenuItem.target = self
+        sauronMenuItem.state = eyeStyle == .sauron ? .on : .off
+        menu.addItem(sauronMenuItem)
+        menu.addItem(.separator())
         let quitItem = NSMenuItem(title: "Quit MouseEyes", action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
@@ -83,6 +102,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 view.autoresizingMask = [.width, .height]
                 contentView.addSubview(view)
             }
+            view.style = eyeStyle
             // AppKit adds the button/replicant hosting views on its own schedule,
             // sometimes after ours. The replicant image snapshots the entire real
             // button window — including the eyes we drew there — so if it ends up
@@ -127,6 +147,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // catches AppKit recreating or reordering status bar window content.
         attachEyeballViews()
         eyeballViews.forEach { $0.triggerUpdate() }
+    }
+
+    @objc func toggleSauron() {
+        eyeStyle = eyeStyle == .sauron ? .googly : .sauron
     }
 
     @objc func showAbout() {
