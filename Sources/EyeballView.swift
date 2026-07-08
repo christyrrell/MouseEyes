@@ -18,10 +18,10 @@ class EyeballView: NSView {
         self.needsDisplay = true
     }
 
-    override func mouseDown(with event: NSEvent) {
-        if let menu = self.menu {
-            NSMenu.popUpContextMenu(menu, with: event, for: self)
-        }
+    // Pass clicks through to the status item button (or its replicant on
+    // secondary displays) underneath, so the menu opens natively everywhere.
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
     }
 
     private func startBlinkTimer() {

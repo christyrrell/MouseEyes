@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		A1000001223344550001 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002223344550001 /* main.swift */; };
 		A1000001223344550002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002223344550002 /* AppDelegate.swift */; };
-		A1000001223344550003 /* EyeballWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002223344550003 /* EyeballWindow.swift */; };
 		A1000001223344550004 /* EyeballView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000002223344550004 /* EyeballView.swift */; };
 		A1000001223344550005 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1000002223344550005 /* Cocoa.framework */; };
 		A1000001223344550006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000002223344550008 /* Assets.xcassets */; };
@@ -18,7 +17,6 @@
 /* Begin PBXFileReference section */
 		A1000002223344550001 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		A1000002223344550002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		A1000002223344550003 /* EyeballWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EyeballWindow.swift; sourceTree = "<group>"; };
 		A1000002223344550004 /* EyeballView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EyeballView.swift; sourceTree = "<group>"; };
 		A1000002223344550005 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		A1000002223344550006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -62,7 +60,6 @@
 			children = (
 				A1000002223344550001 /* main.swift */,
 				A1000002223344550002 /* AppDelegate.swift */,
-				A1000002223344550003 /* EyeballWindow.swift */,
 				A1000002223344550004 /* EyeballView.swift */,
 			);
 			path = Sources;
@@ -139,7 +136,6 @@
 			files = (
 				A1000001223344550001 /* main.swift in Sources */,
 				A1000001223344550002 /* AppDelegate.swift in Sources */,
-				A1000001223344550003 /* EyeballWindow.swift in Sources */,
 				A1000001223344550004 /* EyeballView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

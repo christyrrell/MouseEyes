@@ -41,6 +41,48 @@ for screen in NSScreen.screens {
 - `.stationary`: Don't move during Exposé
 - `.fullScreenAuxiliary`: Show alongside full-screen apps
 
+### v1.2: Back to NSStatusItem — the Replicant Discovery
+
+The floating-window approach worked but required ever-growing heuristics to avoid
+overlapping other menubar icons (hardcoded offsets, then a CGWindowList scan for
+the leftmost status item). The overlap problem is unsolvable from outside the
+menubar: only a real `NSStatusItem` gets space *reserved* for it.
+
+Re-investigating the original mirroring blocker revealed how it actually works:
+
+- AppKit creates **one `NSStatusBarWindow` per display** for a status item, all
+  owned by our process and visible in `NSApp.windows`.
+- One window hosts the real `NSStatusBarButton`; each other display's window
+  hosts an `NSStatusItemReplicantView` containing an image view that mirrors the
+  button window's rendered content. That is why a custom button view shows
+  identical pixels on every display — but the replicant windows themselves are
+  ordinary local windows we can add views to.
+
+**Solution**: draw nothing in the button (a transparent placeholder image
+reserves the item's width — an empty button collapses to zero), and attach an
+independent `EyeballView` on top of each status bar window's `contentView`.
+Each view computes its angle from its own window's screen position, restoring
+true per-monitor tracking *inside* a real status item.
+
+**Gotchas discovered**:
+- The replicant image snapshots the entire real-button window — including the
+  eyes we draw there. If the replicant hosting view ends up above our attached
+  view (AppKit adds these on its own schedule, sometimes after we attach), that
+  display shows a mirror of the other display's eyes. Fix: re-assert our view as
+  the topmost subview (and give it a high layer `zPosition`) on every update.
+- Status bar windows are created, destroyed, and reordered by AppKit at will
+  (display changes, item repositioning), so attachment is re-checked on screen
+  change notifications, on a 3s timer, and on every mouse update.
+- New third-party items default to the far *left* of the icon area; on a notched
+  MacBook with a crowded menubar that lands under the notch and macOS hides the
+  item (its window reports `occluded`). Seeding
+  `NSStatusItem Preferred Position <autosaveName>` in UserDefaults before
+  creating the item requests a slot near the right edge on first launch;
+  `autosaveName` persists later Cmd-drag repositioning.
+- Clicks should open the item's menu natively on every display, so `EyeballView`
+  overrides `hitTest` to return `nil`, letting events fall through to the button
+  or replicant beneath.
+
 ## Technical Challenges & Solutions
 
 ### 1. Multi-Monitor Angle Calculation
@@ -139,17 +181,22 @@ class EyeballWindow: NSWindow {
 
 ## Architecture Insights
 
-### Why Floating Windows Win
+### Why a Real NSStatusItem Wins (v1.2+)
 
-**NSStatusItem Limitations**:
-- Single shared view across all menubars
-- No way to detect which monitor is rendering
-- `window.screen` returns same value for all renders
+**Floating window limitations** (v1.0–1.1 approach):
+- The menubar doesn't know the windows exist, so other icons can be laid out
+  underneath them — avoiding overlap required fragile positioning heuristics
+- Notch avoidance, Cmd-drag repositioning, and menu behavior all reimplemented
+  by hand
 
-**Floating Window Benefits**:
-- Independent window instance per screen
-- Each has its own coordinate space
-- True per-monitor angle calculation
+**Status item benefits**:
+- The menubar reserves genuine space; overlap is impossible and other icons
+  reflow around the eyes
+- Native menu handling, drag-to-reposition with persistence, automatic layout
+- Per-monitor rendering still achieved by attaching one `EyeballView` to each
+  display's status bar window (see the Replicant Discovery section) — each has
+  its own window and coordinate space, so per-monitor angle calculation works
+  exactly as it did with floating windows
 
 ### Coordinate System
 
@@ -179,37 +226,33 @@ Example with 3 monitors (1920x1080 each):
 Entry point. Creates NSApplication and AppDelegate.
 
 ### AppDelegate.swift
-- Creates `EyeballWindow` for each screen
-- Manages global mouse event monitoring
-- Handles screen configuration changes
-- Triggers redraws on all windows
-
-### EyeballWindow.swift
-- Borderless transparent window at `.statusBar` level
-- Detects screen notch via `auxiliaryTopLeftArea`
-- Positions appropriately per screen type
-- Hosts `EyeballView` and provides right-click menu
+- Creates the `NSStatusItem` (fixed 60pt length, transparent placeholder image,
+  native About/Quit menu, `autosaveName` for position persistence)
+- Attaches an `EyeballView` to each display's status bar window and keeps it
+  topmost (re-checked on screen changes, a timer, and every mouse update)
+- Manages global mouse event monitoring and triggers redraws on all views
 
 ### EyeballView.swift
 - Custom NSView subclass
-- Calculates angle from its screen position to mouse
+- Calculates angle from its own window's screen position to mouse
 - Draws eyeballs with Core Graphics
 - Manages blink timer and animation
+- `hitTest` returns nil so clicks reach the status item button natively
 
 ## Build System
 
-**Swift Package Manager**: Chosen for simplicity
-- `Package.swift`: Defines executable target
-- `build.sh`: Compiles and creates `.app` bundle
+**Xcode project** (`MouseEyes.xcodeproj`, migrated from Swift Package Manager in v1.1)
 - `Info.plist`: Bundle configuration with `LSUIElement = true` (no Dock icon)
+- Build: `xcodebuild -project MouseEyes.xcodeproj -scheme MouseEyes -configuration Release build`
+- See `DISTRIBUTION.md` for archive/notarize/distribute steps
 
 ## Lessons Learned
 
-1. **NSStatusItem mirroring is a trap**: Appears to work until you need per-monitor state
+1. **NSStatusItem mirroring is a replicant, not magic**: The mirrored copies are real windows in your own process — you can attach per-display views to them
 2. **macOS coordinate system is global**: All screens share one coordinate space
-3. **Notch detection is essential**: Modern MacBooks require special handling
-4. **Menubar real estate is precious**: System + third-party apps consume 800+ pixels from right
-5. **Floating windows at statusBar level**: Perfect for menubar-like UI without NSStatusItem constraints
+3. **Menubar real estate is precious**: Only a real status item gets space reserved; floating windows over the menubar can always be overlapped
+4. **Verify per-display behavior empirically**: Screenshots + a known cursor position caught the replicant image painting over our attached view
+5. **Floating windows at statusBar level** (v1.0–1.1): Workable, but positioning heuristics fight a losing battle against other menubar apps
 
 ## Future Enhancements
 

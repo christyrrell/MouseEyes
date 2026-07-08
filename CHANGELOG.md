@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2 (2026-07-07)
+
+### Changed
+
+- **Native menubar item**: The eyes now live in a real `NSStatusItem` instead of floating windows overlaid on the menubar, so macOS reserves genuine space for them — they can never be drawn on top of another menubar icon, and other icons reflow around them. Per-monitor tracking is preserved by attaching an independent eyeball view to each display's status bar window (AppKit creates one per screen: the real button on one, a replicant that mirrors its image on the others — the mirroring that originally forced the floating-window approach).
+- The menu now opens natively from the status item (left- or right-click) on any display.
+- The item can be repositioned with Cmd-drag and the position persists. On first launch it asks for a slot near the right end of the menubar so it stays visible right of the notch on MacBook displays.
+- Removed the CGWindowList-based heuristic that guessed where other status items were.
+
 ## 1.1 (2026-02-24)
 
 ### Fixed
