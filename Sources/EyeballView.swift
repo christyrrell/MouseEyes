@@ -195,24 +195,43 @@ class EyeballView: NSView {
             y: center.y + sin(angle) * maxSlitOffsetY * distance
         )
 
-        // Fire gradient radiating from the slit, clipped to the almond
+        // Movie-style shading: a bright ring hugs the slit, the body of the eye
+        // is deep ember red, and the rim is lined with bright flame (below).
         context.saveGState()
         context.addPath(almond)
         context.clip()
         let fireColors = [
-            NSColor(calibratedRed: 1.0, green: 0.95, blue: 0.45, alpha: 1).cgColor,
-            NSColor(calibratedRed: 1.0, green: 0.6, blue: 0.1, alpha: 1).cgColor,
-            NSColor(calibratedRed: 0.85, green: 0.2, blue: 0.0, alpha: 1).cgColor,
-            NSColor(calibratedRed: 0.35, green: 0.02, blue: 0.0, alpha: 1).cgColor,
+            NSColor(calibratedRed: 1.0, green: 0.9, blue: 0.35, alpha: 1).cgColor,
+            NSColor(calibratedRed: 0.95, green: 0.4, blue: 0.05, alpha: 1).cgColor,
+            NSColor(calibratedRed: 0.55, green: 0.08, blue: 0.0, alpha: 1).cgColor,
+            NSColor(calibratedRed: 0.45, green: 0.05, blue: 0.0, alpha: 1).cgColor,
         ] as CFArray
         if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                                     colors: fireColors, locations: [0.0, 0.35, 0.7, 1.0]) {
+                                     colors: fireColors, locations: [0.0, 0.3, 0.7, 1.0]) {
             context.drawRadialGradient(
                 gradient,
                 startCenter: slitCenter, startRadius: 0,
-                endCenter: slitCenter, endRadius: eyeWidth * 0.55,
+                endCenter: slitCenter, endRadius: eyeWidth * 0.5,
                 options: .drawsAfterEndLocation
             )
+        }
+
+        // Flame lining along the rim: layered inner strokes brightening toward
+        // the edge (still clipped, so only the inner half of each stroke shows)
+        let rimFlames: [(width: CGFloat, color: (CGFloat, CGFloat, CGFloat), alpha: CGFloat)] = [
+            (9.0, (0.9, 0.3, 0.02), 0.3),
+            (7.0, (1.0, 0.5, 0.05), 0.35),
+            (5.5, (1.0, 0.62, 0.1), 0.4),
+            (4.0, (1.0, 0.75, 0.15), 0.5),
+            (2.8, (1.0, 0.85, 0.3), 0.6),
+            (1.6, (1.0, 0.95, 0.5), 0.7),
+        ]
+        for flame in rimFlames {
+            context.addPath(almond)
+            context.setStrokeColor(NSColor(calibratedRed: flame.color.0, green: flame.color.1,
+                                           blue: flame.color.2, alpha: flame.alpha).cgColor)
+            context.setLineWidth(flame.width)
+            context.strokePath()
         }
 
         // Vertical cat-eye slit pupil (drawn inside the almond clip)
