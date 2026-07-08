@@ -187,15 +187,6 @@ class EyeballView: NSView {
         almond.addQuadCurve(to: leftPoint, control: CGPoint(x: center.x, y: center.y - lidCurve))
         almond.closeSubpath()
 
-        // Outer fiery glow
-        context.saveGState()
-        context.setShadow(offset: .zero, blur: 5,
-                          color: NSColor(calibratedRed: 1.0, green: 0.45, blue: 0.0, alpha: 0.9).cgColor)
-        context.addPath(almond)
-        context.setFillColor(NSColor(calibratedRed: 0.45, green: 0.03, blue: 0.0, alpha: 1).cgColor)
-        context.fillPath()
-        context.restoreGState()
-
         // The slit roams the almond; mostly horizontally, given the eye's shape
         let maxSlitOffsetX = eyeWidth / 2 - 9
         let maxSlitOffsetY: CGFloat = 1.5
@@ -237,12 +228,31 @@ class EyeballView: NSView {
         context.addPath(slit)
         context.setFillColor(NSColor.black.cgColor)
         context.fillPath()
+
+        // Feather the rim: still clipped to the almond, erase with progressively
+        // narrower strokes centered on the edge so the flame's alpha ramps out
+        // smoothly instead of ending in a hard border.
+        context.setBlendMode(.destinationOut)
+        for (width, alpha) in [(6.0, 0.25), (4.5, 0.3), (3.0, 0.4), (1.8, 0.55), (1.0, 0.7)] {
+            context.addPath(almond)
+            context.setStrokeColor(CGColor(gray: 0, alpha: alpha))
+            context.setLineWidth(width)
+            context.strokePath()
+        }
         context.restoreGState()
 
-        // Dark rim around the almond
+        // Soft glow painted BEHIND the feathered flame (destinationOver fills
+        // wherever the eye is translucent), so the faded rim dissolves into a
+        // blurred halo rather than meeting the menubar directly. The shape is
+        // drawn far off-canvas; only its blurred shadow lands on screen.
+        context.saveGState()
+        context.setBlendMode(.destinationOver)
+        context.setShadow(offset: CGSize(width: 0, height: -600), blur: 6,
+                          color: NSColor(calibratedRed: 1.0, green: 0.45, blue: 0.02, alpha: 0.85).cgColor)
+        context.translateBy(x: 0, y: 600)
         context.addPath(almond)
-        context.setStrokeColor(NSColor(calibratedRed: 0.25, green: 0.0, blue: 0.0, alpha: 1).cgColor)
-        context.setLineWidth(1.0)
-        context.strokePath()
+        context.setFillColor(NSColor.black.cgColor)
+        context.fillPath()
+        context.restoreGState()
     }
 }

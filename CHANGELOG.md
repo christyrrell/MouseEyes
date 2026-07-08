@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Eye of Sauron mode**: Toggle "Eye of Sauron" in the menu to replace the googly eyes with a single fiery, lidless eye whose vertical slit pupil tracks the cursor (per monitor, of course). The choice persists across launches.
+- **Eye of Sauron mode**: Toggle "Eye of Sauron" in the menu to replace the googly eyes with a single fiery, lidless eye whose vertical slit pupil tracks the cursor (per monitor, of course). The flame edge feathers out through a soft glow rather than ending in a hard outline. The choice persists across launches.
 
 ### Changed
 
