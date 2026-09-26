@@ -86,9 +86,9 @@ in App Store Connect after a few minutes; Step 4 is still done by hand.
 
 In App Store Connect, attach the processed build to a new version, then fill in:
 
-- **Screenshots**: at least one at 1280x800, 1440x900, 2560x1600, or 2880x1800.
-  Multi-monitor shots showing each display's eyes looking a different way sell
-  the app best.
+- **Screenshots**: upload `AppStore/screenshots/*.png` (2880x1800). Regenerate
+  them with `AppStore/screenshots/make.sh`, which renders the real
+  `EyeballView` drawing code.
 - **Privacy**: "Data Not Collected"; privacy policy URL
   `https://www.tyrrellsworld.com/privacy.html`.
 - **Category**: Utilities (matches `LSApplicationCategoryType`).
