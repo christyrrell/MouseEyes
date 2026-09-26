@@ -62,9 +62,10 @@ Transporter app, or change `destination` to `upload` in
 
 `.github/workflows/app-store.yml` archives and uploads on every `v*` tag push,
 or manually from the Actions tab. It signs with Xcode cloud signing through an
-App Store Connect API key, so no certificates live in the repo or runner. It
-sets `CFBundleVersion` to the workflow run number + 100, so there's no need to
-bump the build number by hand.
+App Store Connect API key, so no certificates live in the repo or runner.
+Versioning is automatic: a `v1.3` tag sets `CFBundleShortVersionString` to
+`1.3` (manual runs keep the version in `Info.plist`), and `CFBundleVersion` is
+the workflow run number + 100, so Step 1 doesn't apply to CI builds.
 
 One-time setup:
 
@@ -77,7 +78,8 @@ One-time setup:
    - `ASC_ISSUER_ID`: the issuer ID shown above the key list
    - `ASC_KEY_P8`: the full contents of the `.p8` file
 
-Release: `git tag v1.3 && git push origin v1.3`. The processed build appears
+Release: `git tag v1.3 && git push origin v1.3`. Create the matching version
+(1.3) in App Store Connect so the build can be attached to it. The processed build appears
 in App Store Connect after a few minutes; Step 4 is still done by hand.
 
 ## Step 4: Submit for Review
