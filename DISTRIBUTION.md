@@ -1,6 +1,7 @@
 # Distributing MouseEyes Outside the App Store
 
 This guide covers building, notarizing, and distributing MouseEyes as a direct download.
+For the Mac App Store build, see `APP_STORE.md`.
 
 ## Prerequisites
 
