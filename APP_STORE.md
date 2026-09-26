@@ -58,6 +58,28 @@ This produces `build/appstore/export/MouseEyes.pkg`. Upload it with the
 Transporter app, or change `destination` to `upload` in
 `ExportOptions-AppStore.plist` to have `xcodebuild` upload it directly.
 
+### Option C: GitHub Actions
+
+`.github/workflows/app-store.yml` archives and uploads on every `v*` tag push,
+or manually from the Actions tab. It signs with Xcode cloud signing through an
+App Store Connect API key, so no certificates live in the repo or runner. It
+sets `CFBundleVersion` to the workflow run number + 100, so there's no need to
+bump the build number by hand.
+
+One-time setup:
+
+1. App Store Connect > Users and Access > Integrations > App Store Connect API >
+   **Generate API Key** with the **Admin** role (cloud signing needs Admin to
+   create distribution certificates). Download the `.p8` file; it can only be
+   downloaded once.
+2. Add three repository secrets (Settings > Secrets and variables > Actions):
+   - `ASC_KEY_ID`: the key ID
+   - `ASC_ISSUER_ID`: the issuer ID shown above the key list
+   - `ASC_KEY_P8`: the full contents of the `.p8` file
+
+Release: `git tag v1.3 && git push origin v1.3`. The processed build appears
+in App Store Connect after a few minutes; Step 4 is still done by hand.
+
 ## Step 4: Submit for Review
 
 In App Store Connect, attach the processed build to a new version, then fill in:

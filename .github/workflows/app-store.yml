@@ -1,0 +1,80 @@
+name: App Store Upload
+
+# Archives MouseEyes and uploads it to App Store Connect. Runs on version tags
+# (v1.3, v1.3.1, ...) or manually from the Actions tab. Never runs for pull
+# requests, so forks can't reach the signing secrets.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: app-store-upload
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain and set paths
+        run: |
+          xcodebuild -version
+          {
+            echo "ARCHIVE_PATH=$RUNNER_TEMP/MouseEyes.xcarchive"
+            echo "EXPORT_PATH=$RUNNER_TEMP/export"
+            echo "ASC_KEY_PATH=$RUNNER_TEMP/AuthKey.p8"
+          } >> "$GITHUB_ENV"
+
+      - name: Write App Store Connect API key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: printf '%s' "$ASC_KEY_P8" > "$ASC_KEY_PATH"
+
+      # Every upload needs a unique, increasing CFBundleVersion. Offset the run
+      # number past the builds already uploaded by hand.
+      - name: Set build number
+        run: |
+          BUILD=$(( ${{ github.run_number }} + 100 ))
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Info.plist
+          echo "CFBundleVersion $BUILD, version $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)"
+
+      # Release is configured for manual Developer ID signing, which the runner
+      # has no certificate for. Archive with automatic signing instead; Xcode
+      # cloud signing supplies the certificate and profile through the API key.
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project MouseEyes.xcodeproj \
+            -scheme MouseEyes \
+            -configuration Release \
+            -archivePath "$ARCHIVE_PATH" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Development" \
+            DEVELOPMENT_TEAM=4772RJKZ43
+
+      - name: Export and upload to App Store Connect
+        run: |
+          cp ExportOptions-AppStore.plist "$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Set :destination upload" "$RUNNER_TEMP/ExportOptions.plist"
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Remove API key
+        if: always()
+        run: rm -f "$ASC_KEY_PATH"
